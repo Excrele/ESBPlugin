@@ -112,7 +112,7 @@ public class ESBPlugin extends JavaPlugin implements Listener {
         killMobsMeta.setDisplayName(ChatColor.GREEN + "Kill Nearby Mobs");
         killMobsMeta.setLore(Arrays.asList(ChatColor.YELLOW + "Kill mobs within 20 blocks"));
         killMobs.setItemMeta(killMobsMeta);
-        gui.setItem(22, killMobs);
+        gui.setItem(21, killMobs);
 
         // Ground Clutter
         ItemStack groundClutter = new ItemStack(Material.DROPPER);
