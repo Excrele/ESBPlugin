@@ -3,8 +3,9 @@
  * Updated for Spigot 1.21.5 compatibility, with asynchronous scanning and improved metrics.
  * Fixed redstone scan to handle copper bulb variants correctly.
  * Fixed ground clutter management to use EntityType.ITEM instead of DROPPED_ITEM.
+ * Added "Kill Nearby Mobs" function to kill mobs within 20 blocks of the player.
  * Features a GUI for server information, entity scanning, ground clutter management,
- * redstone detection, chunk corruption checking, and chunk regeneration.
+ * redstone detection, chunk corruption checking, chunk regeneration, and mob killing.
  * All commands require specific permissions and use the /esb prefix.
  */
 package com.excrele.esb;
@@ -105,6 +106,14 @@ public class ESBPlugin extends JavaPlugin implements Listener {
         mobScan.setItemMeta(mobScanMeta);
         gui.setItem(12, mobScan);
 
+        // Kill Nearby Mobs
+        ItemStack killMobs = new ItemStack(Material.SKELETON_SKULL);
+        ItemMeta killMobsMeta = killMobs.getItemMeta();
+        killMobsMeta.setDisplayName(ChatColor.GREEN + "Kill Nearby Mobs");
+        killMobsMeta.setLore(Arrays.asList(ChatColor.YELLOW + "Kill mobs within 20 blocks"));
+        killMobs.setItemMeta(killMobsMeta);
+        gui.setItem(22, killMobs);
+
         // Ground Clutter
         ItemStack groundClutter = new ItemStack(Material.DROPPER);
         ItemMeta groundClutterMeta = groundClutter.getItemMeta();
@@ -183,6 +192,13 @@ public class ESBPlugin extends JavaPlugin implements Listener {
                     player.sendMessage(ChatColor.RED + "You do not have permission to scan mobs!");
                 }
                 break;
+            case "§aKill Nearby Mobs":
+                if (player.hasPermission("esb.killnearbymobs")) {
+                    killNearbyMobs(player);
+                } else {
+                    player.sendMessage(ChatColor.RED + "You do not have permission to kill nearby mobs!");
+                }
+                break;
             case "§aManage Ground Clutter":
                 if (player.hasPermission("esb.groundclutter")) {
                     manageGroundClutter(player);
@@ -240,7 +256,6 @@ public class ESBPlugin extends JavaPlugin implements Listener {
             }
         }
         int players = Bukkit.getOnlinePlayers().size();
-        // commented out as  not currently working properly
         //double[] tps = Bukkit.getServer().getTPS();
         player.sendMessage(ChatColor.AQUA + "=== Server Information ===");
         player.sendMessage(ChatColor.YELLOW + "RAM: " + usedMemory + "/" + totalMemory + " MB");
@@ -249,8 +264,7 @@ public class ESBPlugin extends JavaPlugin implements Listener {
         player.sendMessage(ChatColor.YELLOW + "Entities: " + entities);
         player.sendMessage(ChatColor.YELLOW + "Mobs: " + mobs);
         player.sendMessage(ChatColor.YELLOW + "Players: " + players);
-       // commented out as not currently working properly
-        // player.sendMessage(ChatColor.YELLOW + "TPS: " + String.format("%.2f", tps[0]));
+        //player.sendMessage(ChatColor.YELLOW + "TPS: " + String.format("%.2f", tps[0]));
     }
 
     // Scan chunks for entities (asynchronous)
@@ -322,6 +336,19 @@ public class ESBPlugin extends JavaPlugin implements Listener {
                 }.runTask(ESBPlugin.this);
             }
         }.runTaskAsynchronously(this);
+    }
+
+    // Kill mobs within 20 blocks of the player
+    private void killNearbyMobs(Player player) {
+        int radius = 20;
+        int count = 0;
+        for (Entity entity : player.getNearbyEntities(radius, radius, radius)) {
+            if (entity.getType().isAlive() && !(entity instanceof Player)) {
+                entity.remove();
+                count++;
+            }
+        }
+        player.sendMessage(ChatColor.GREEN + "Killed " + count + " mobs within " + radius + " blocks.");
     }
 
     // Scan and manage ground clutter

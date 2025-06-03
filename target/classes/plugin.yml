@@ -1,5 +1,5 @@
 name: ExcrelesSystemBooster
-version: 1.1
+version: 1.2
 main: com.excrele.esb.ESBPlugin
 api-version: 1.21
 commands:
@@ -18,6 +18,9 @@ permissions:
     default: op
   esb.mobscan:
     description: Allows scanning for mobs
+    default: op
+  esb.killnearbymobs:
+    description: Allows killing nearby mobs
     default: op
   esb.groundclutter:
     description: Allows managing ground clutter
