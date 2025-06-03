@@ -1,0 +1,33 @@
+name: ExcrelesSystemBooster
+version: 1.1
+main: com.excrele.esb.ESBPlugin
+api-version: 1.21
+commands:
+  esb:
+    description: Opens the ESB Control Panel
+    usage: /<command>
+permissions:
+  esb.use:
+    description: Allows use of the /esb command
+    default: op
+  esb.serverinfo:
+    description: Allows viewing server information
+    default: op
+  esb.entityscan:
+    description: Allows scanning for entities
+    default: op
+  esb.mobscan:
+    description: Allows scanning for mobs
+    default: op
+  esb.groundclutter:
+    description: Allows managing ground clutter
+    default: op
+  esb.redstonescan:
+    description: Allows scanning for active redstone
+    default: op
+  esb.chunkcorruption:
+    description: Allows scanning for chunk corruption
+    default: op
+  esb.regeneratechunk:
+    description: Allows regenerating chunks
+    default: op
