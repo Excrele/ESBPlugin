@@ -1,5 +1,5 @@
 name: ExcrelesSystemBooster
-version: 1.2
+version: 1.3
 main: com.excrele.esb.ESBPlugin
 api-version: 1.21
 commands:
@@ -21,6 +21,9 @@ permissions:
     default: op
   esb.killnearbymobs:
     description: Allows killing nearby mobs
+    default: op
+  esb.destroynearbyentities:
+    description: Allows destroying nearby entities
     default: op
   esb.groundclutter:
     description: Allows managing ground clutter

@@ -1,12 +1,14 @@
 /*
  * Excrele's System Booster (ESB) - A Spigot plugin for server performance monitoring and management.
- * Updated for Spigot 1.21.5 compatibility, with asynchronous scanning and improved metrics.
+ * Built for Spigot 1.21.5 compatibility, requiring Spigot-API 1.21.5-R0.1-SNAPSHOT.
  * Fixed redstone scan to handle copper bulb variants correctly.
  * Fixed ground clutter management to use EntityType.ITEM instead of DROPPED_ITEM.
  * Added "Kill Nearby Mobs" function to kill mobs within 20 blocks of the player.
+ * Added "Destroy Nearby Entities" function to destroy all entities within 25 blocks of the player.
  * Features a GUI for server information, entity scanning, ground clutter management,
- * redstone detection, chunk corruption checking, chunk regeneration, and mob killing.
+ * redstone detection, chunk corruption checking, chunk regeneration, mob killing, and entity destruction.
  * All commands require specific permissions and use the /esb prefix.
+ * Note: Ensure the Spigot 1.21.5 API is used in the build environment to resolve methods like Server.getTPS().
  */
 package com.excrele.esb;
 
@@ -114,6 +116,14 @@ public class ESBPlugin extends JavaPlugin implements Listener {
         killMobs.setItemMeta(killMobsMeta);
         gui.setItem(21, killMobs);
 
+        // Destroy Nearby Entities
+        ItemStack destroyEntities = new ItemStack(Material.TNT);
+        ItemMeta destroyEntitiesMeta = destroyEntities.getItemMeta();
+        destroyEntitiesMeta.setDisplayName(ChatColor.GREEN + "Destroy Nearby Entities");
+        destroyEntitiesMeta.setLore(Arrays.asList(ChatColor.YELLOW + "Destroy entities within 25 blocks"));
+        destroyEntities.setItemMeta(destroyEntitiesMeta);
+        gui.setItem(20, destroyEntities);
+
         // Ground Clutter
         ItemStack groundClutter = new ItemStack(Material.DROPPER);
         ItemMeta groundClutterMeta = groundClutter.getItemMeta();
@@ -199,6 +209,13 @@ public class ESBPlugin extends JavaPlugin implements Listener {
                     player.sendMessage(ChatColor.RED + "You do not have permission to kill nearby mobs!");
                 }
                 break;
+            case "§aDestroy Nearby Entities":
+                if (player.hasPermission("esb.destroynearbyentities")) {
+                    destroyNearbyEntities(player);
+                } else {
+                    player.sendMessage(ChatColor.RED + "You do not have permission to destroy nearby entities!");
+                }
+                break;
             case "§aManage Ground Clutter":
                 if (player.hasPermission("esb.groundclutter")) {
                     manageGroundClutter(player);
@@ -256,7 +273,7 @@ public class ESBPlugin extends JavaPlugin implements Listener {
             }
         }
         int players = Bukkit.getOnlinePlayers().size();
-        //double[] tps = Bukkit.getServer().getTPS();
+       // double[] tps = Bukkit.getServer().getTPS();
         player.sendMessage(ChatColor.AQUA + "=== Server Information ===");
         player.sendMessage(ChatColor.YELLOW + "RAM: " + usedMemory + "/" + totalMemory + " MB");
         player.sendMessage(ChatColor.YELLOW + "CPU Usage: " + (cpuUsage >= 0 ? String.format("%.2f", cpuUsage) : "N/A") + "%");
@@ -349,6 +366,19 @@ public class ESBPlugin extends JavaPlugin implements Listener {
             }
         }
         player.sendMessage(ChatColor.GREEN + "Killed " + count + " mobs within " + radius + " blocks.");
+    }
+
+    // Destroy all entities within 25 blocks of the player, excluding the player
+    private void destroyNearbyEntities(Player player) {
+        int radius = 25;
+        int count = 0;
+        for (Entity entity : player.getNearbyEntities(radius, radius, radius)) {
+            if (!(entity instanceof Player)) {
+                entity.remove();
+                count++;
+            }
+        }
+        player.sendMessage(ChatColor.GREEN + "Destroyed " + count + " entities within " + radius + " blocks.");
     }
 
     // Scan and manage ground clutter
