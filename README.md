@@ -1,12 +1,13 @@
 # Excrele's System Booster (ESB)
 
-Excrele's System Booster (ESB) is a Spigot plugin designed for Minecraft server administrators to monitor and optimize server performance. Updated for Spigot 1.21.5, it provides a user-friendly in-game GUI to access tools for server management, including performance metrics, entity and mob scanning, ground clutter management, redstone detection, chunk corruption scanning, and chunk regeneration. This version includes fixes for accurate detection of copper bulb variants in the redstone scan and uses `EntityType.ITEM` for ground clutter management. All commands and features are protected by permissions, with asynchronous operations to enhance performance.
+Excrele's System Booster (ESB) is a Spigot plugin designed for Minecraft server administrators to monitor and optimize server performance. Updated for Spigot 1.21.5 (version 1.2), it provides a user-friendly in-game GUI to access tools for server management, including performance metrics, entity and mob scanning, ground clutter management, redstone detection, chunk corruption scanning, chunk regeneration, and a new feature to kill mobs within 20 blocks of the player. This version includes fixes for accurate detection of copper bulb variants in the redstone scan and uses `EntityType.ITEM` for ground clutter management. All commands and features are protected by permissions, with asynchronous operations for most scans to enhance performance.
 
 ## Features
 
 - **Server Information**: Displays RAM allocation and usage, CPU utilization (using modern metrics), loaded chunks, entities, mobs, connected players, and server TPS (ticks per second).
 - **Entity Scan**: Identifies the top 5 chunks with the most entities, listing their coordinates and counts (asynchronous).
 - **Mob Scan**: Identifies the top 5 chunks with the most mobs, listing their coordinates and counts (asynchronous).
+- **Kill Nearby Mobs**: Kills all mobs within 20 blocks of the player, excluding players and non-living entities.
 - **Ground Clutter Management**: Scans for dropped items (`EntityType.ITEM`), assigns a 5-minute despawn timer, and displays a countdown above each item.
 - **Redstone Scan**: Identifies the top 5 chunks with the most redstone components, including all copper bulb variants (e.g., `COPPER_BULB`, `EXPOSED_COPPER_BULB`) introduced in 1.21 (asynchronous).
 - **Chunk Corruption Scan**: Detects corrupted chunks across loaded worlds with reasons for suspected corruption (asynchronous).
@@ -74,13 +75,15 @@ After running `/esb`, a GUI with 27 slots opens, containing the following option
    - Permission: `esb.entityscan`
 3. **Scan Mobs** (Zombie Head icon): Lists the top 5 chunks with the most mobs (asynchronous).
    - Permission: `esb.mobscan`
-4. **Manage Ground Clutter** (Dropper icon): Scans for dropped items (`EntityType.ITEM`) and sets a 5-minute despawn timer with a visible countdown.
+4. **Kill Nearby Mobs** (Skeleton Skull icon): Kills all mobs within 20 blocks of the player.
+   - Permission: `esb.killnearbymobs`
+5. **Manage Ground Clutter** (Dropper icon): Scans for dropped items (`EntityType.ITEM`) and sets a 5-minute despawn timer with a visible countdown.
    - Permission: `esb.groundclutter`
-5. **Scan Active Redstone** (Redstone icon): Lists the top 5 chunks with the most redstone components, including all copper bulb variants (asynchronous).
+6. **Scan Active Redstone** (Redstone icon): Lists the top 5 chunks with the most redstone components, including all copper bulb variants (asynchronous).
    - Permission: `esb.redstonescan`
-6. **Scan Chunk Corruption** (Barrier icon): Lists all corrupted chunks with reasons for corruption (asynchronous).
+7. **Scan Chunk Corruption** (Barrier icon): Lists all corrupted chunks with reasons for corruption (asynchronous).
    - Permission: `esb.chunkcorruption`
-7. **Regenerate Current Chunk** (Grass Block icon): Checks and regenerates the player’s current chunk if corrupted (asynchronous).
+8. **Regenerate Current Chunk** (Grass Block icon): Checks and regenerates the player’s current chunk if corrupted (asynchronous).
    - Permission: `esb.regeneratechunk`
 
 Click an item in the GUI to execute the corresponding action. If you lack the required permission, a message will inform you.
@@ -91,6 +94,7 @@ The plugin defines the following permissions, all defaulting to `op`:
 - `esb.serverinfo`: Allows viewing server information.
 - `esb.entityscan`: Allows scanning for entities.
 - `esb.mobscan`: Allows scanning for mobs.
+- `esb.killnearbymobs`: Allows killing mobs within 20 blocks of the player.
 - `esb.groundclutter`: Allows managing ground clutter.
 - `esb.redstonescan`: Allows scanning for redstone components.
 - `esb.chunkcorruption`: Allows scanning for chunk corruption.
@@ -122,25 +126,30 @@ To assign permissions, use a permissions plugin like LuckPerms. Example command:
 3. **Mob Scan**:
    - Asynchronously counts entities where `isAlive()` is true.
    - Outputs chunk coordinates, world name, and mob count.
-4. **Ground Clutter Management**:
+4. **Kill Nearby Mobs**:
+   - Uses `Player.getNearbyEntities(20, 20, 20)` to find entities within a 20-block radius.
+   - Removes entities where `isAlive()` is true, excluding players.
+   - Reports the number of mobs killed in a chat message.
+5. **Ground Clutter Management**:
    - Scans for `EntityType.ITEM` entities (dropped items).
    - Assigns a 5-minute despawn timer, stored in a `ConcurrentHashMap`.
    - A recurring task updates item names with a countdown (e.g., “Despawns in Xs”) and removes items when the timer expires.
-5. **Redstone Scan**:
+6. **Redstone Scan**:
    - Asynchronously counts blocks with material names containing “REDSTONE”, “PISTON”, “STICKY_PISTON”, “REPEATER”, “COMPARATOR”, or any copper bulb variant (e.g., “COPPER_BULB”, “EXPOSED_COPPER_BULB”).
    - Outputs the top 5 chunks with coordinates and component counts.
-6. **Chunk Corruption Scan**:
+7. **Chunk Corruption Scan**:
    - Asynchronously attempts to access block data in each chunk; exceptions indicate potential corruption.
    - Lists corrupted chunks with coordinates, world name, and error message.
-7. **Chunk Regeneration**:
+8. **Chunk Regeneration**:
    - Checks the player’s current chunk for corruption by accessing block data.
    - If corrupted, asynchronously regenerates the chunk using `World.regenerateChunk()`.
 
 ## Limitations and Notes
-- **Performance**: Asynchronous scanning minimizes lag, but servers with many loaded chunks may still experience delays. Test on a development server before production use.
+- **Performance**: Asynchronous scanning minimizes lag, but servers with many loaded chunks may still experience delays. The “Kill Nearby Mobs” feature is synchronous but lightweight, as it only processes nearby entities. Test on a development server before production use.
 - **Redstone Detection**: Counts redstone-related blocks, including all 1.21.5 copper bulb variants, but does not detect “active” redstone states due to Spigot API limitations.
 - **Chunk Corruption**: The corruption check is basic, relying on exceptions when accessing block data. Advanced corruption detection may require external tools.
 - **Holograms**: Ground item timers use custom names for simplicity. For true holograms, consider integrating a plugin like HolographicDisplays.
+- **Kill Nearby Mobs**: Affects all living entities except players within 20 blocks. Use cautiously to avoid unintended removal of tamed or named mobs.
 - **Compatibility**: Designed for Spigot 1.21.5 and compatible with Paper 1.21.5. Test thoroughly, as newer versions may introduce breaking changes.
 
 ## Troubleshooting
@@ -150,7 +159,7 @@ To assign permissions, use a permissions plugin like LuckPerms. Example command:
    - Verify that `plugin.yml` is correctly placed in the JAR.
 - **Permission Issues**:
    - Ensure players have the necessary permissions using a permissions plugin.
-   - Check that `esb.use` is granted to access the GUI.
+   - Check that `esb.use` is granted to access the GUI and `esb.killnearbymobs` for the new feature.
 - **Performance Lag**:
    - Reduce loaded chunks or worlds if scans cause delays.
    - Schedule scans during low-traffic periods.
@@ -160,8 +169,11 @@ To assign permissions, use a permissions plugin like LuckPerms. Example command:
 - **CPU Usage Shows “N/A”**:
    - Some Java environments may not support `getCpuLoad()`. The fallback metric may also be unavailable on certain systems.
 - **Redstone or Item Scan Errors**:
-   - Ensure the Spigot 1.21.5 API is used, as older versions lack copper bulb materials or use outdated entity types (e.g., `DROPPED_ITEM`).
+   - Ensure the Spigot 1.21.5 API is used, as older versions lack copper bulb materials or use outdated entity types.
    - Verify that the build environment includes the correct API dependency.
+- **Kill Nearby Mobs Not Working**:
+   - Confirm the player has the `esb.killnearbymobs` permission.
+   - Ensure mobs are within a 20-block radius and are living entities (e.g., zombies, not armor stands).
 
 ## Contributing
 Contributions are welcome! To contribute:
